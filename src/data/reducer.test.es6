@@ -41,6 +41,13 @@ LLFFFLFLFL`
 
     expect( newState.world.maxX ).toBe(5);
     expect( newState.world.maxY ).toBe(3);
+
+    expect( newState.rovers.count() ).toBe(3);
+
+    expect( newState.rovers.get(1).lastPosition[0] ).toBe(3);
+    expect( newState.rovers.get(1).lastPosition[1] ).toBe(3);
+    expect( newState.rovers.get(1).lastPosition[2] ).toBe('N');
+    expect( newState.rovers.get(1).isLost ).toBe(true);
         
   });
 

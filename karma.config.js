@@ -6,7 +6,7 @@ module.exports = function(config) {
     basePath: '',
     frameworks: ['jasmine'],
 
-    reporters: ['progress'],
+    reporters: ['progress', 'clear-screen'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,

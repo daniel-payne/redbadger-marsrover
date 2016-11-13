@@ -5,6 +5,10 @@ import ReactBootstrapSlider  from 'react-bootstrap-slider';
 
 import { Checkbox, Radio, Panel, ListGroup, ListGroupItem, Label, Grid, Row, Col, MenuItem, ControlLabel, FormControl, NavDropdown, NavItem, Nav, Navbar, ButtonGroup, Button, Tabs, Tab, FormGroup, ButtonToolbar, Glyphicon } from 'react-bootstrap';
 
+import { RoverInstructions } from './components/presenters/RoverInstructions.jsx'
+import { TextInstructions } from './components/presenters/TextInstructions.jsx'
+import { ResultsText } from './components/presenters/ResultsText.jsx'
+
 class App extends React.Component {
 
   constructor(props){
@@ -24,8 +28,7 @@ class App extends React.Component {
     const verticalSizeStyle   = { display: 'inline-block', clear: 'none', position: 'absolute', verticalAlign: 'bottom', top: 32,             height: 'auto',              width: '32px' };
     const horizontalSizeStyle = { display: 'inline-block', clear: 'none', position: 'absolute', verticalAlign: 'bottom',            left: 32, height: '32px',              width: 'calc(100% - 32px)' };
 
-    const instructionStyle = { border: '1px solid #EEE', padding: 8 };
-
+    
     return (
         <div className="container-fluid">
         
@@ -49,61 +52,14 @@ class App extends React.Component {
                 
                     <Tabs defaultActiveKey={2} id="uncontrolled-tab-example">
                         <Tab eventKey={1} title="Rovers" style={tabStyle} >
-
-                          <div>
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-right" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-right" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-right" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-right" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                             <Glyphicon glyph="chevron-left" style={instructionStyle} />
-                             <Glyphicon glyph="arrow-up" style={instructionStyle} />
-                          </div>
-                          &nbsp;
-                          <ButtonToolbar>
-                            <ButtonGroup>
-                                <Button><Glyphicon glyph="chevron-left" /></Button>
-                                <Button><Glyphicon glyph="arrow-up" /></Button>
-                                <Button><Glyphicon glyph="chevron-right" /></Button>
-                                <Button><Glyphicon glyph="remove" /></Button>
-                            </ButtonGroup>
-                         </ButtonToolbar> 
-                         <hr/>
-                         <Button>Add Rover</Button>
+                          <RoverInstructions></RoverInstructions>              
                         </Tab>
                         <Tab eventKey={2} title="Instructions" style={tabStyle} >
-
-                         
-
-    <FormGroup controlId="formControlsTextarea">
-      <ControlLabel>Instruction Text</ControlLabel>
-      <FormControl componentClass="textarea" placeholder="textarea" rows="30" style={{border: 'none', width: '100%', height: 'calc(100% - 32px)', resize: 'none' }}  defaultValue={
-`5 3
-1 1 E
-RFRFRFRF
-
-3 2 N
-FRRFLLFFRRFLL
-
-0 3 W
-LLFFFLFLFL`  
-}>
-      </FormControl>
-    </FormGroup>
+                           <TextInstructions></TextInstructions>
                         </Tab>
-                        <Tab eventKey={3} title="Results" style={tabStyle} >Results</Tab>
+                        <Tab eventKey={3} title="Results" style={tabStyle} >
+                           <ResultsText></ResultsText>
+                        </Tab>
                     </Tabs>
               
                 </Col>

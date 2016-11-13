@@ -5,6 +5,7 @@ import Immutable                           from 'immutable'
 
 const X = 0;
 const Y = 1;
+const D = 2;
 
 const LOAD_INSTRUCTIONS = 'LOAD_INSTRUCTIONS';
 export const loadInstructions: ActionCreator<Action> = (payload) => ({
@@ -13,6 +14,135 @@ export const loadInstructions: ActionCreator<Action> = (payload) => ({
 });
 
 // Helpers ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function calculateNextLocation(currentPosition, instruction, world){
+
+  var maxXLocation      = parseInt(world.maxX, 10);
+  var maxYLocation      = parseInt(world.maxY, 10);
+  var minXLocation      = parseInt(world.minX, 10);
+  var minYLocation      = parseInt(world.minY, 10);
+  var currentXLocation  = parseInt(currentPosition[X], 10);
+  var currentYLocation  = parseInt(currentPosition[Y], 10);
+  var currentDirection  = currentPosition[D];
+
+  if (instruction.toUpperCase() === 'F'){
+
+    switch(currentDirection) {
+
+        case 'N': currentYLocation = currentYLocation + 1;  break;
+        case 'S': currentYLocation = currentYLocation - 1;  break;
+
+        case 'E': currentXLocation = currentXLocation + 1;  break;
+        case 'W': currentXLocation = currentXLocation - 1;  break;
+
+    }
+
+  }
+
+  if ( (currentXLocation > maxXLocation ) ||
+        (currentYLocation > maxYLocation ) ||
+        (currentXLocation < minXLocation ) ||
+        (currentYLocation < minYLocation ) ){
+
+    //console.log('OFF WORLD')
+
+    throw 'Off World'
+
+  }
+
+  //console.log([currentPosition[X],currentPosition[Y],currentPosition[D], instruction,currentXLocation,currentYLocation,currentPosition[D]])
+
+  return [currentXLocation,currentYLocation,currentPosition[D]];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function calculateNextDirection(currentPosition, instruction){
+
+  var currentDirection  = currentPosition[D];
+
+  var newLeftDirections  = { N: 'W', E: 'N', S: 'E', W: 'S' };
+  var newRightDirections = { N: 'E', E: 'S', S: 'W', W: 'N' };
+
+  if (instruction.toUpperCase() === 'L'){
+
+    currentDirection = newLeftDirections[currentDirection];
+
+  } else if (instruction.toUpperCase() === 'R'){
+
+    currentDirection = newRightDirections[currentDirection];
+
+  }
+
+  //console.log([currentPosition[X],currentPosition[Y],currentPosition[D], instruction, currentPosition[X],currentPosition[Y],currentDirection])
+
+  return [currentPosition[X],currentPosition[Y],currentDirection];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function calculateMovements(robot, world){
+
+  var newPosition;
+  var currentPosition = robot.startPosition;
+  var isLost          = false;
+  var positions       = [];
+  //console.log([+currentPosition[X],+currentPosition[Y],currentPosition[D]])
+
+  robot.instructions.forEach( function(item){
+
+    let nextPosition;
+
+    if (! isLost){
+
+      try{
+
+        switch(item.toUpperCase()) {
+          case 'R':
+              nextPosition = calculateNextDirection(currentPosition, 'R');
+              break;
+          case 'L':
+              nextPosition = calculateNextDirection(currentPosition, 'L');
+              break;
+          case 'F':
+              nextPosition = calculateNextLocation(currentPosition, 'F', world);
+              break;
+
+        }
+
+        positions.push( [...nextPosition] );
+
+        currentPosition = [...nextPosition];
+
+        //console.log([nextPosition[X],nextPosition[Y],nextPosition[D]])
+
+      } catch (e) {
+
+        isLost = true;
+
+      }
+
+    }
+
+  });
+
+  //console.log([+currentPosition[X],+currentPosition[Y],currentPosition[D], isLost])
+
+  return Object.assign( {}, robot, { lastPosition: currentPosition, isLost, positions } );
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      
+function extractResults(movements){
+
+  return movements.map( function(item){
+
+      return [ item.lastPosition[X], item.lastPosition[Y], item.lastPosition[D], item.isLost === false ? '' : 'LOST' ].join(' ');
+
+  });
+
+}
       
 function extractWorld(text){
 
@@ -24,12 +154,12 @@ function extractWorld(text){
 
 }
 
-function extractRobots(text){
+function extractRovers(text, world){
 
   var nextPosition;
-  var nextSequence;
+  var nextInstructions;
 
-  var robots = [];
+  var rovers = []; 
   var data   = text.split("\n");
 
   data.shift();
@@ -40,26 +170,34 @@ function extractRobots(text){
 
         if (! nextPosition){
           nextPosition = item;
-        } else if (! nextSequence){
-          nextSequence = item;
+        } else if (! nextInstructions){
+          nextInstructions = item;
         }
 
-        if (nextPosition && nextSequence  ) {
+        if (nextPosition && nextInstructions  ) {
 
-          robots.push( {
-            startPosition: nextPosition,
-            sequence:      nextSequence
+          rovers.push( {
+            startPosition:     nextPosition.split(' '),
+            instructions:      nextInstructions.split(''),
+            positions:         []
           })
 
-          nextPosition = undefined;
-          nextSequence = undefined;
+          nextPosition     = undefined;
+          nextInstructions = undefined;
         }
 
     }
 
   });
 
-  return Immutable.List(robots);
+
+  rovers = rovers.map( function(item){
+
+    return calculateMovements(item, world);
+
+  });
+
+  return rovers
 
 }
 
@@ -68,9 +206,21 @@ function extractRobots(text){
 function processLoadInstructions(state, payload) {
 
   var world     = extractWorld(payload);
-  var robots    = extractRobots(payload);
+  var rovers    = extractRovers(payload, world);
 
-  return Object.assign( {}, state, { world, robots } );
+  rovers = rovers.map( function(item){
+
+    return calculateMovements(item, world);
+
+  });
+
+  var results   = extractResults(rovers)
+
+  return Object.assign( {}, state, { 
+    world:   Object.freeze(world), 
+    rovers:  Immutable.List(rovers), 
+    results: Object.freeze(results) 
+  } );
 }
 
 // Reducer ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
