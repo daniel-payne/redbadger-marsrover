@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mars Robot - with old school simple &amp; quick ES5 programming</title>
+
+  <style>
+
+     html, body {
+        height: 100%;
+        overflow:hidden;
+     }
+
+     textarea {
+       border: none;
+     }
+
+     .inputArea{
+       display:    inline-block;
+       width:      40%;
+       padding:    8px;
+       height:     calc(100% - 96px);
+       box-sizing: border-box;
+       overflow-y: auto;
+       overflow-x: hidden;
+     }
+
+     .outputArea{
+       display:           inline-block;
+       width:             calc(60% - 4px);
+       border:            1px solid #808080;
+       height:            calc(100% - 96px);
+       box-sizing:        border-box;
+       vertical-align:    top;
+       padding:           16px;
+     }
+
+  </style>
+</head>
+<body>
+
+  <p>
+    <button onclick="runSimulation()">Run Simulation</button>
+  </p>
+
+
+
+  <div class="inputArea">
+
+    <textarea class="inputs" rows="100" style="width: 100%">
+5 3
+1 1 E
+RFRFRFRF
+
+3 2 N
+FRRFLLFFRRFLL
+
+0 3 W
+LLFFFLFLFL
+    </textarea>
+
+  </div>
+
+  <div class="outputArea" >
+    <ul class="outputs"></ul>
+  </div>
+
+
+  <script>
+    // to be read from bottom up
+    (function () {
+
+      var X = 0;
+      var Y = 1;
+      var D = 2;
+
+      var data;
+      var worldSize = [];
+      var robots    = [];
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function calculateNextLocation(currentPosition, instruction, world){
+
+        var maxXLocation      = parseInt(world.maxX, 10);
+        var maxYLocation      = parseInt(world.maxY, 10);
+        var minXLocation      = parseInt(world.minX, 10);
+        var minYLocation      = parseInt(world.minY, 10);
+        var currentXLocation  = parseInt(currentPosition[X], 10);
+        var currentYLocation  = parseInt(currentPosition[Y], 10);
+        var currentDirection  = currentPosition[D];
+
+        if (instruction.toUpperCase() === 'F'){
+
+          switch(currentDirection) {
+
+              case 'N': currentYLocation = currentYLocation + 1;  break;
+              case 'S': currentYLocation = currentYLocation - 1;  break;
+
+              case 'E': currentXLocation = currentXLocation + 1;  break;
+              case 'W': currentXLocation = currentXLocation - 1;  break;
+
+          }
+
+        }
+
+        if ( (currentXLocation > maxXLocation ) ||
+             (currentYLocation > maxYLocation ) ||
+             (currentXLocation < minXLocation ) ||
+             (currentYLocation < minYLocation ) ){
+
+          //console.log('OFF WORLD')
+
+          throw 'Off World'
+
+        }
+
+        //console.log([currentPosition[X],currentPosition[Y],currentPosition[D], instruction,currentXLocation,currentYLocation,currentPosition[D]])
+
+        return [currentXLocation,currentYLocation,currentPosition[D]];
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function calculateNextDirection(currentPosition, instruction){
+
+        var currentDirection  = currentPosition[D];
+
+        var newLeftDirections  = { N: 'W', E: 'N', S: 'E', W: 'S' };
+        var newRightDirections = { N: 'E', E: 'S', S: 'W', W: 'N' };
+
+        if (instruction.toUpperCase() === 'L'){
+
+          currentDirection = newLeftDirections[currentDirection];
+
+        } else if (instruction.toUpperCase() === 'R'){
+
+          currentDirection = newRightDirections[currentDirection];
+
+        }
+
+        //console.log([currentPosition[X],currentPosition[Y],currentPosition[D], instruction, currentPosition[X],currentPosition[Y],currentDirection])
+
+        return [currentPosition[X],currentPosition[Y],currentDirection];
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function calculateMovements(robot, world){
+
+        var newPosition;
+        var currentPosition = robot.startPosition.split(' ');
+        var isLost          = false;
+        var actions         = robot.sequence.split('');
+
+        //console.log([+currentPosition[X],+currentPosition[Y],currentPosition[D]])
+
+        actions.forEach( function(item){
+
+          if (! isLost){
+
+            try{
+
+              switch(item.toUpperCase()) {
+                case 'R':
+                    currentPosition = calculateNextDirection(currentPosition, 'R');
+                    break;
+               case 'L':
+                    currentPosition = calculateNextDirection(currentPosition, 'L');
+                    break;
+               case 'F':
+                    currentPosition = calculateNextLocation(currentPosition, 'F', world);
+                    break;
+
+              }
+
+              //console.log([currentPosition[X],currentPosition[Y],currentPosition[D]])
+
+            } catch (e) {
+
+              isLost = true;
+
+            }
+
+          }
+
+        });
+
+        //console.log([+currentPosition[X],+currentPosition[Y],currentPosition[D], isLost])
+
+        return Object.assign( {}, robot, { lastPosition: currentPosition, isLost: isLost } );
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function extractResults(movements){
+
+        return movements.map( function(item){
+
+           return [ item.lastPosition[X], item.lastPosition[Y], item.lastPosition[D], item.isLost === false ? '' : 'LOST' ].join(' ');
+
+        });
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function processInstructions(robots, world){
+
+        return robots.map( function(item){
+
+          return calculateMovements(item, world);
+
+        });
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function extractRobots(text){
+
+        var nextPosition;
+        var nextSequence;
+
+        var robots = [];
+        var data   = text.split("\n");
+
+        data.shift();
+
+        data.forEach( function(item){
+
+          if (item.length > 0){
+
+             if (! nextPosition){
+                nextPosition = item;
+             } else if (! nextSequence){
+                nextSequence = item;
+             }
+
+             if (nextPosition && nextSequence  ) {
+
+               robots.push( {
+                 startPosition: nextPosition,
+                 sequence:      nextSequence
+               })
+
+               nextPosition = undefined;
+               nextSequence = undefined;
+             }
+
+          }
+
+        });
+
+        return robots;
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function extractWorld(text){
+
+        var data = text.split("\n");
+
+        var sizes = data[0].split(' ');
+
+        return { minX: 0, minY: 0, maxX: sizes[X], maxY: sizes[Y] };
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function addToOutput(text) {
+          var node     = document.createElement("li");
+          var textnode = document.createTextNode(text);
+          node.appendChild(textnode);
+          document.querySelector(".outputs").appendChild(node);
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function runSimulation(){
+
+        var text      = document.querySelector('textarea').value;
+
+        var world     = extractWorld(text);
+        var robots    = extractRobots(text);
+
+        var movements = processInstructions(robots, world);
+
+        var results   = extractResults(movements)
+
+        results.forEach( function(item){
+
+          addToOutput(item);
+
+        });
+
+
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      window.runSimulation = runSimulation;
+
+    })();
+
+
+  </script>
+
+</body>
+</html>
