@@ -42,6 +42,7 @@
     "karma-jasmine": "^1.0.2",
     "karma-requirejs": "^1.1.0",
     "karma-webpack": "^1.8.0",
+    "react-addons-test-utils": "^15.3.2",
     "react-hot-loader": "^3.0.0-beta.3",
     "redux-devtools": "^3.3.1",
     "requirejs": "^2.3.2"

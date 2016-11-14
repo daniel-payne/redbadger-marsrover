@@ -13,6 +13,11 @@ export const loadInstructions: ActionCreator<Action> = (payload) => ({
   payload:  payload
 });
 
+const RUN_INSTRUCTIONS = 'RUN_INSTRUCTIONS';
+export const runInstructions: ActionCreator<Action> = () => ({
+  type:     RUN_INSTRUCTIONS 
+});
+
 // Helpers ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function calculateNextLocation(currentPosition, instruction, world){
@@ -140,7 +145,7 @@ function extractResults(movements){
 
       return [ item.lastPosition[X], item.lastPosition[Y], item.lastPosition[D], item.isLost === false ? '' : 'LOST' ].join(' ');
 
-  });
+  }).toArray().join('\n');
 
 }
       
@@ -190,13 +195,6 @@ function extractRovers(text, world){
 
   });
 
-
-  rovers = rovers.map( function(item){
-
-    return calculateMovements(item, world);
-
-  });
-
   return rovers
 
 }
@@ -208,18 +206,35 @@ function processLoadInstructions(state, payload) {
   var world     = extractWorld(payload);
   var rovers    = extractRovers(payload, world);
 
-  rovers = rovers.map( function(item){
+  return Object.assign( {}, state, { 
+    instructions: payload,
+    world:        Object.freeze(world), 
+    rovers:       Immutable.List(rovers), 
+    results:      undefined 
+  } );
 
-    return calculateMovements(item, world);
+}
+
+function processRunInstructions(state) { 
+ 
+  var newRovers;
+  var newState = state;
+
+  if (! newState.results){
+    newState = processLoadInstructions(newState, newState.instructions)
+  }
+
+  newRovers = newState.rovers.map( function(item){
+
+    return calculateMovements(item, newState.world);
 
   });
 
-  var results   = extractResults(rovers)
+  var results   = extractResults(newRovers)
 
-  return Object.assign( {}, state, { 
-    world:   Object.freeze(world), 
-    rovers:  Immutable.List(rovers), 
-    results: Object.freeze(results) 
+  return Object.assign( {}, newState, { 
+    rovers:  Immutable.List(newRovers), 
+    results: results 
   } );
 }
 
@@ -235,7 +250,18 @@ export const initialWorldState = {
     maxY: 0
   },
 
-  robots:      Immutable.List([])
+  instructions: 
+`5 3
+1 1 E
+RFRFRFRF
+
+3 2 N
+FRRFLLFFRRFLL
+
+0 3 W
+LLFFFLFLFL`,
+
+  rovers:      Immutable.List([])
 }
  
 export const worldReducer =
@@ -245,7 +271,8 @@ export const worldReducer =
 
     switch (action.type) {
 
-      case LOAD_INSTRUCTIONS:     return processLoadInstructions(   newState, action.payload                );
+      case LOAD_INSTRUCTIONS:     return processLoadInstructions( newState, action.payload );
+      case RUN_INSTRUCTIONS:      return processRunInstructions(  newState                 );
 
       default:                    return newState;
 

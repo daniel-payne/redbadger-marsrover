@@ -13,24 +13,17 @@ class TextInstructions extends React.Component {
 
   render () {
 
+      let update = (event) => {
+        this.props.onUpdateInstructions(event.target.value) 
+      };
 
       return <div>
 
-    <FormGroup controlId="formControlsTextarea">
-      <ControlLabel>Instruction Text</ControlLabel>
-      <FormControl componentClass="textarea" placeholder="textarea" rows="30" style={{border: 'none', width: '100%', height: 'calc(100% - 32px)', resize: 'none' }}  defaultValue={
-`5 3
-1 1 E
-RFRFRFRF
-
-3 2 N
-FRRFLLFFRRFLL
-
-0 3 W
-LLFFFLFLFL`  
-}>
-      </FormControl>
-    </FormGroup>
+        <FormGroup controlId="formControlsTextarea">
+          <ControlLabel>Instruction Text</ControlLabel>
+          <FormControl componentClass="textarea" value={this.props.instructions} onChange={update}  placeholder="Instructions to go here" rows="30" style={{border: 'none', width: '100%', height: 'calc(100% - 32px)', resize: 'none' }} >
+          </FormControl>
+        </FormGroup>
 
       </div>
   }

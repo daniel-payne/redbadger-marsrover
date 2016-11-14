@@ -16,11 +16,13 @@ module.exports = function(config) {
     autoWatchBatchDelay: 300,
 
     files: [
-      './src/**/*.test.es6'
+      './src/**/*.test.es6',
+      './src/**/*.test.jsx'
     ],
 
     preprocessors: {   
-      './src/**/*.test.es6':   ['webpack']
+      './src/**/*.test.es6':   ['webpack'],
+      './src/**/*.test.jsx':   ['webpack']
     },
 
     webpack: webpackConfig,
